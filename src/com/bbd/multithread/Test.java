@@ -3,16 +3,82 @@ package com.bbd.multithread;
 import javafx.scene.paint.Stop;
 
 import javax.sound.midi.Soundbank;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Test {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         //m1();
         //m2();
         //m3();
         //m4();
         //m5();
-        m6();
+        //m6();
+        //m7();
+        m8();
+    }
+    public static void m8() throws IOException, InterruptedException {
+        Thread t[] = new Thread[2];
+        Thread.State s[] = new Thread.State[2];
+        for (int i=0; i<2; i++) {
+            t[i] = new Thread(new Calculator(i));
+            if ((i%2) == 0) {
+                t[i].setPriority(Thread.MAX_PRIORITY);
+            } else {
+                t[i].setPriority(Thread.MIN_PRIORITY);
+            }
+            t[i].setName("Thread" + i);
+        }
+        FileWriter file = new FileWriter("G://record.txt");
+        PrintWriter pw = new PrintWriter(file);
+        for (int i=0; i<2; i++) {
+            pw.println("Main : Status of Thread "+i+" : " +t[i].getState());
+            pw.flush();
+            s[i]=t[i].getState();
+        }
+        for (int i=0; i<2; i++) {
+            t[i].start();
+        }
+        boolean finish=false;
+        while (!finish) {
+            for (int i=0; i<2; i++){
+                if (t[i].getState()!=s[i]) {
+                    writeThreadInfo(pw, t[i],s[i]);
+                    s[i]=t[i].getState();
+                }
+            }
+            finish=true;
+            for (int i=0; i<2; i++){
+                finish=finish && (s[i] == Thread.State.TERMINATED);
+                if (finish == false) {
+                    break;
+                }
+            }
+        }
+        for (int i=0; i<2; i++) {
+            System.out.println(t[i].getName() + ":" + t[i].getState());
+            System.out.println(t[i].getName() + ":" + s[i]);
+        }
+    }
+    private static void writeThreadInfo(PrintWriter pw, Thread thread, Thread.State state) {
+        pw.printf("Main : Id %d - %s\n", thread.getId(), thread.getName());
+        pw.println();
+        pw.printf("Main : Priority: %d\n", thread.getPriority());
+        pw.println();
+        pw.printf("Main : Old State: %s\n", state);
+        pw.println();
+        pw.printf("Main : New State: %s\n", thread.getState());
+        pw.println();
+        pw.flush();
+    }
+        public static void m7() {
+        for (int i=0; i<10; i++) {
+            Calculator calculator = new Calculator(i);
+            Thread t = new Thread(calculator);
+            t.start();
+        }
     }
 
     public static void m1() {
