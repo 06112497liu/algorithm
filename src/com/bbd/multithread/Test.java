@@ -126,26 +126,23 @@ public class Test {
     public static void m6() throws InterruptedException {
         myThread t1 = new myThread();
         new Thread(t1).start();
-        Thread.sleep(100);
         t1.stop();
     }
 }
 
 class myThread implements Runnable {
 
-    public volatile Boolean flag = false;
+    public Boolean flag = false;
 
     @Override
     public void run() {
-        flag = false;
         while (!flag) {
-
             System.out.println("线程执行中。。。");
         }
     }
 
-    public void stop() {
+    public void stop() throws InterruptedException {
+        Thread.sleep(10);
         flag = true;
-        System.out.println("停止");
     }
 }
