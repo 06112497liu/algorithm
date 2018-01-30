@@ -12,7 +12,7 @@ import java.util.Set;
  * @author Liuweibo
  * @version Id: RedisDemo1.java, v0.1 2018/1/30 Liuweibo Exp $$
  */
-public class RedisDemo1 {
+public class    RedisDemo1 {
 
     private static Jedis jedis;
 
@@ -27,7 +27,7 @@ public class RedisDemo1 {
 //        m02();
 //        m03();
 //        m04();
-        m05();
+//        m05();
     }
 
     public static void m01() {
