@@ -1,11 +1,14 @@
 package com.bbd.redis;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Tuple;
 import sun.awt.image.codec.JPEGImageEncoderImpl;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Liuweibo
@@ -29,6 +32,8 @@ public class Vote {
 
     private static final String VOTED = "voted";
 
+    private static final int MINUTE = 60;
+
 
     private static Jedis jedis;
 
@@ -40,7 +45,9 @@ public class Vote {
 //        storageArticle();
 //        storagePubtime();
 //        storageScore();
-        dianzan("1025", "92617");
+//        dianzan("1025", "92617");
+//        System.out.println(generateArticleId());
+        juhe();
     }
     // 存储文章基本信息（用redis的散列存储类型来存储文章基本信息）
     public static void storageArticle() {
@@ -70,9 +77,26 @@ public class Vote {
     }
 
     // 发布一篇文章
-    public static void pubArticle() {
-        
+    public static void pubArticle(Map<String, String> hash, String uid) {
+        // 随机生成文章id
+        int artId = generateArticleId();
+        // 将该文章的用户id加入该文章的已投票用户名单里面（自己不能给自己投票）
+        jedis.sadd(VOTED + COLON + artId, hash.get("poster"));
+        // 设置名单过期时间为一分钟
+        jedis.expire(VOTED + COLON + artId, MINUTE);
+        // 将文章的基本信息存放在散列里面
+        jedis.hmset(ARTICLE + COLON + artId, hash);
+        // 将文章的发布时间和初始得分加入到两个有序集合里面
+        jedis.zadd(PUBLISH_TIME, Double.valueOf(hash.get("time")), ARTICLE + COLON + artId);
+        jedis.zadd(SCORE, FACTOR, ARTICLE + COLON + artId);
     }
+
+    // 随机生成文章ID
+    public static int generateArticleId() {
+        int v = (int) (Math.random() * 100000);
+        return v;
+    }
+
 
     // 给某个文章点赞
     public static void dianzan(String uid, String articleId) {
@@ -92,6 +116,21 @@ public class Vote {
             jedis.zincrby(SCORE, FACTOR, ARTICLE + COLON + articleId);
             // step-5：得票数增加
             jedis.hincrBy(ARTICLE + COLON + "92617", "votes", 1);
+        }
+    }
+
+    // redis聚合操作
+    public static void juhe() {
+        jedis.sadd("group:java", ARTICLE + COLON + 10001, ARTICLE + COLON + 10002, ARTICLE + COLON + 10003, ARTICLE + COLON + 10004);
+        Map<String, Double> map = new HashMap<>();
+        map.put(ARTICLE + COLON + 10001, 10.25);
+        map.put(ARTICLE + COLON + 10004, 1.67);
+        map.put(ARTICLE + COLON + 10007, 5.02);
+        jedis.zadd(SCORE, map);
+        jedis.zinterstore("result", "group:java", SCORE);
+        Set<Tuple> rs = jedis.zrangeWithScores("result", 0, -1);
+        for (Tuple t : rs) {
+            System.out.println(t.getElement() + " ; " + t.getScore());
         }
     }
 }
