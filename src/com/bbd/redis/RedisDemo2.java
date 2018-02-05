@@ -3,8 +3,13 @@ package com.bbd.redis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.Tuple;
+import redis.clients.jedis.ZParams;
 
-import javax.print.attribute.standard.MediaSize;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Liuweibo
@@ -23,7 +28,10 @@ public class RedisDemo2 {
     public static void main(String[] args) {
 //        method01();
 //        method02();
-        method03();
+//        method03();
+//        method04();
+//        method05();
+        method06();
     }
 
     public static void method01() {
@@ -53,10 +61,52 @@ public class RedisDemo2 {
         jedis.rpush("list2", "ele1");
         System.out.println(jedis.lrange("list1", 0, -1));
         System.out.println(jedis.lrange("list2", 0, -1));
-        jedis.rpoplpush("list2", "list1");
+        jedis.rpoplpush("list2", "list1"); // 弹出list2列表中最右端的元素，然后推入的list1列表中的最左端
         System.out.println(jedis.lrange("list1", 0, -1));
         System.out.println(jedis.lrange("list2", 0, -1));
-        jedis.brpoplpush("list2", "list1", 9); // 这个方法会阻塞9秒，当list2中有数据时，就会执行，当到时间是，直接返回一个null
+        jedis.brpoplpush("list2", "list1", 9); // 这个方法会阻塞9秒，当list2中有数据时，就会执行，当到时间时，直接返回一个null
+    }
+
+    public static void method04() {
+        jedis.sadd("jihe", new  String[]{"1", "2", "3", "4"});
+        logger.info(jedis.smembers("jihe").toString()); // 返回集合中的所有元素
+        logger.info(jedis.scard("jihe").toString()); // 返回集合中元素的个数
+        logger.info(jedis.srandmember("jihe")); // 随机返回集合中的一个元素
+        logger.info(jedis.srandmember("jihe", 2).toString()); // 随机返回集合中的两个不重复元素
+    }
+
+    public static void method05() {
+        jedis.sadd("jihe1", new String[]{"1", "2", "3", "4", "6"});
+        jedis.sadd("jihe2", new String[]{"1", "2", "3", "4", "5"});
+        jedis.sadd("jihe3", new String[]{"3", "4", "5", "7"});
+        Set<String> rs = jedis.sdiff("jihe1", "jihe2", "jihe3"); // 返回存在于jihe1中，但不存在于后面其他集合中的数据（差）
+        logger.info(rs.toString()); // [6]
+    }
+
+    public static void method06() {
+        Map<String, Double> map1 = new HashMap<>();
+        map1.put("a", 1.0);map1.put("b", 0.5);map1.put("c", 0.98);map1.put("d", 1.22);
+        jedis.zadd("zset1", map1);
+
+        Map<String, Double> map2 = new HashMap<>();
+        map2.put("c", 1.98);map2.put("f", 0.24);
+        jedis.zadd("zset2", map2);
+
+        Long resp = jedis.zinterstore("jiaoji", new ZParams().aggregate(ZParams.Aggregate.SUM), "zset1", "zset2");
+        System.out.println(resp);
+        Set<Tuple> s = jedis.zrangeWithScores("jiaoji", 0, -1);
+        for (Tuple tuple : s) {
+            System.out.println(tuple.getElement() + " : " + tuple.getScore());
+        }
+    }
+
+    public static void method07() {
+        jedis.subscribe(new JedisPubSub() {
+            @Override
+            public void onMessage(String channel, String message) {
+                super.onMessage(channel, message);
+            }
+        });
     }
 
 }
