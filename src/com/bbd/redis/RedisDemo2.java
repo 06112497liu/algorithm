@@ -2,12 +2,10 @@ package com.bbd.redis;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPubSub;
-import redis.clients.jedis.Tuple;
-import redis.clients.jedis.ZParams;
+import redis.clients.jedis.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +29,10 @@ public class RedisDemo2 {
 //        method03();
 //        method04();
 //        method05();
-        method06();
+//        method06();
+//        method07();
+//        method08();
+        method09();
     }
 
     public static void method01() {
@@ -101,12 +102,28 @@ public class RedisDemo2 {
     }
 
     public static void method07() {
-        jedis.subscribe(new JedisPubSub() {
-            @Override
-            public void onMessage(String channel, String message) {
-                super.onMessage(channel, message);
-            }
-        });
+        jedis.lpush("key11", new String[]{"3", "1", "2"});
+        logger.info(jedis.lrange("key11", 0, -1).toString());
+        List<String> resp = jedis.sort("key11", new SortingParams().desc()); // 取出结果，并对结果进行排序
+        logger.info(resp.toString());
+    }
+
+    public static void method08() {
+        jedis.lpush("key12", new String[]{"a", "c", "b", "f"});
+        logger.info(jedis.lrange("key12", 0, -1).toString());
+        List<String> resp = jedis.sort("key12", new SortingParams().alpha().desc()); // 取出结果，并对结果进行排序（对于非数字的排序，需要加alpha参数，否则会报转换成数据异常）
+        logger.info(resp.toString());
+    }
+
+    public static void method09() {
+        jedis.lpush("sort-input", new String[]{"a", "c", "b", "f"});
+        jedis.hset("d-a", "field", "5");
+        jedis.hset("d-b", "field", "1");
+        jedis.hset("d-c", "field", "9");
+        jedis.hset("d-f", "field", "3");
+        // 将散列的权重，用来排序sort-input
+        List<String> resp = jedis.sort("sort-input", new SortingParams().by("d-*->field"));
+        System.out.println(resp);
     }
 
 }
