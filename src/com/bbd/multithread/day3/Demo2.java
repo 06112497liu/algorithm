@@ -11,7 +11,7 @@ public class Demo2 {
             for (int i = cursor; i <= end; i++) {
                 ArrayUtils.swap(array, cursor, i);
                 fullArray(array, cursor + 1, end);
-                ArrayUtils.swap(array, cursor, i); // 用于对之前交换过的数据进行还原
+                ArrayUtils.swap(array, i, cursor); // 用于对之前交换过的数据进行还原
             }
         }
     }
@@ -22,7 +22,7 @@ public class Demo2 {
     }
 
     public static void main(String[] args) {
-        int[] arr = {1, 2};
+        int[] arr = {1, 2, 3};
         core(arr);
     }
 
